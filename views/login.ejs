@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Login</title>
+  <style>
+    .flash-message {
+      color: red;
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h2>Login</h2>
+
+  <!-- 플래시 메시지 출력 -->
+  <% if (error_msg) { %>
+    <div class="flash-message"><%= error_msg %></div>
+  <% } %>
+  <% if (error) { %>
+    <div class="flash-message"><%= error %></div>
+  <% } %>
+
+  <form action="/auth/login" method="POST">
+    <label for="email">Email:</label>
+    <input type="email" name="email" required>
+    <label for="password">Password:</label>
+    <input type="password" name="password" required>
+    <button type="submit">Login</button>
+  </form>
+
+  <!-- 회원가입 버튼 -->
+  <p>Don't have an account? <a href="/auth/register">Sign Up</a></p>
+</body>
+</html>

@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Register</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+    form {
+      max-width: 400px;
+      margin: 0 auto;
+    }
+    label {
+      display: block;
+      margin-top: 10px;
+      font-weight: bold;
+    }
+    input {
+      width: 100%;
+      padding: 8px;
+      margin: 5px 0 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    button {
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      padding: 10px;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    .flash {
+      color: red;
+      font-weight: bold;
+      margin-bottom: 15px;
+    }
+  </style>
+</head>
+<body>
+  <h2>Register</h2>
+
+  <!-- 플래시 메시지 표시 -->
+  <% if (locals.error) { %>
+    <p class="flash"><%= error %></p>
+  <% } %>
+  <% if (locals.success_msg) { %>
+    <p class="flash" style="color: green;"><%= success_msg %></p>
+  <% } %>
+
+  <!-- 회원가입 폼 -->
+  <form action="/auth/register" method="POST">
+    <label for="storeName">Store Name:</label>
+    <input type="text" name="storeName" value="<%= locals.storeName || '' %>" required>
+    
+    <label for="address">Address:</label>
+    <input type="text" name="address" value="<%= locals.address || '' %>" required>
+    
+    <label for="email">Email:</label>
+    <input type="email" name="email" value="<%= locals.email || '' %>" required>
+
+    <label for="password">Password:</label>
+    <input type="password" name="password" required>
+    
+    <button type="submit">Sign Up</button>
+  </form>
+
+  <!-- 로그인 페이지로 이동 -->
+  <p>Already have an account? <a href="/auth/login">Login</a></p>
+</body>
+</html>

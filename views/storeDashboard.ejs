@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Store Dashboard</title>
+  <style>
+    /* 사이드바 스타일 */
+    .sidebar {
+      width: 200px;
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 100%;
+      background-color: #333;
+      padding-top: 20px;
+    }
+
+    .sidebar a {
+      display: block;
+      color: white;
+      padding: 10px;
+      text-decoration: none;
+    }
+
+    .sidebar a:hover {
+      background-color: #575757;
+    }
+
+    /* 메인 콘텐츠 스타일 */
+    .main-content {
+      margin-left: 220px;
+      padding: 20px;
+    }
+
+    /* 카테고리 드롭다운 스타일 */
+    .category-dropdown {
+      margin-bottom: 20px;
+    }
+
+    #categorySelect {
+      font-size: 20px;
+      padding: 10px;
+    }
+
+    /* 제품 이미지 스타일 */
+    .product-image-container {
+      overflow: hidden;
+      position: relative;
+      width: 100px;
+      height: 100px;
+      border-radius: 4px;
+    }
+
+    .product-image-container img {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      will-change: transform;
+    }
+
+    /* 테이블 스타일 */
+    table {
+      margin-top: 20px; /* 테이블 위에 20px 마진 추가 */
+      border-collapse: collapse;
+      width: 100%;
+    }
+
+    table th, table td {
+      border: 1px solid #ddd;
+      padding: 8px;
+    }
+
+    table th {
+      background-color: #f4f4f4;
+    }
+
+    /* 버튼 스타일 */
+    button {
+      margin-top: 20px; /* 버튼에 20px 마진 추가 */
+      padding: 10px 20px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    button:hover {
+      background-color: #45a049;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 사이드바 -->
+  <div class="sidebar">
+    <h3 style="color: white; text-align: center;">Store Panel</h3>
+    <a href="/store/dashboard">All Products</a>
+    <a href="/store/cart">Cart</a>
+    <a href="/orders/history">Order History</a>
+  </div>
+
+  <!-- 메인 콘텐츠 -->
+  <div class="main-content">
+    <h2>All Products</h2>
+
+    <!-- 카테고리 드롭다운 -->
+    <div class="category-dropdown">
+      <label for="categorySelect" style="font-size: 20px;">First, Select Product category.</label>
+      <select id="categorySelect">
+        <option value="all">All</option>
+        <option value="powderBased">Powder based I</option>
+        <option value="sauce">Sauce</option>
+        <option value="paperGoods">Paper goods & etc.</option>
+      </select>
+    </div>
+
+    <% if (products.length === 0) { %>
+      <p>No products available.</p>
+    <% } else { %>
+      <form id="cart-form" action="/store/cart/add" method="POST">
+        <table>
+          <thead>
+            <tr>
+              <th>Select</th>
+              <th>Category</th>
+              <th>Product Name</th>
+              <th>Image</th>
+              <th>Price</th>
+              <th>Stock</th>
+              <th>Quantity</th>
+            </tr>
+          </thead>
+          <tbody id="productTableBody">
+            <% products.forEach(product => { %>
+              <tr class="product-row" data-category="<%= product.category %>">
+                <td>
+                  <input 
+                    type="checkbox" 
+                    name="selectedProducts[]" 
+                    value="<%= product._id %>" 
+                    id="product-<%= product._id %>">
+                </td>
+                <td><%= product.category %></td>
+                <td><%= product.name %></td>
+                <td>
+                  <div class="product-image-container">
+                    <img src="<%= product.image %>" alt="<%= product.name %>">
+                  </div>
+                </td>
+                <td>₩<%= product.price.toLocaleString() %></td>
+                <td><%= product.stock %></td>
+                <td>
+                  <input 
+                    type="number" 
+                    name="quantities[<%= product._id %>]" 
+                    min="1" 
+                    value="1" 
+                    required 
+                    id="quantity-<%= product._id %>">
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+        <button type="submit">Add Selected to Cart</button>
+      </form>
+    <% } %>
+  </div>
+
+  <script>
+    // 카테고리 선택 시 필터링
+    document.getElementById('categorySelect').addEventListener('change', function() {
+      const selectedCategory = this.value;
+      const productRows = document.querySelectorAll('.product-row');
+
+      productRows.forEach(row => {
+        const rowCategory = row.getAttribute('data-category');
+        
+        if (selectedCategory === 'all' || rowCategory === selectedCategory) {
+          row.style.display = '';  // 해당 카테고리는 보이도록
+        } else {
+          row.style.display = 'none';  // 다른 카테고리는 숨김
+        }
+      });
+    });
+
+    // 기본적으로 페이지 로드 시 "All"로 모든 제품을 표시
+    document.getElementById('categorySelect').dispatchEvent(new Event('change'));
+  </script>
+
+</body>
+</html>

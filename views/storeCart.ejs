@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Cart</title>
+  <style>
+    /* 기본 스타일 */
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+
+    h2 {
+      text-align: center;
+    }
+
+    /* 테이블 스타일 */
+    table {
+      margin: 20px auto;
+      border-collapse: collapse;
+      width: 80%;
+    }
+
+    table th, table td {
+      border: 1px solid #ddd;
+      padding: 10px;
+      text-align: center;
+    }
+
+    table th {
+      background-color: #f4f4f4;
+      font-weight: bold;
+    }
+
+    /* 버튼 스타일 */
+    button {
+      background-color: #007bff;
+      color: white;
+      border: none;
+      padding: 5px 10px;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    /* 총합 섹션 스타일 */
+    .total-section {
+      text-align: center;
+      margin: 20px auto;
+      font-size: 1.2em;
+      font-weight: bold;
+    }
+
+    .empty-cart {
+      text-align: center;
+      margin-top: 50px;
+      font-size: 1.2em;
+      color: #555;
+    }
+
+      /* Simple styling for the popup */
+      .popup {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background-color: #fff;
+      padding: 20px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      border-radius: 5px;
+      text-align: center;
+    }
+  </style>
+  <script>
+    // JavaScript for dynamic subtotal and total updates
+    function updateSubtotalAndTotal() {
+      let totalAmount = 0;
+
+      // Update subtotals and calculate total
+      document.querySelectorAll("tbody tr").forEach((row) => {
+        const price = parseFloat(row.querySelector(".price").dataset.price);
+        const quantityInput = row.querySelector(".quantity-input");
+        const subtotalElement = row.querySelector(".subtotal");
+
+        const quantity = parseInt(quantityInput.value) || 0;
+
+        // Calculate and update subtotal
+        const subtotal = price * quantity;
+        subtotalElement.textContent = `₩${subtotal.toLocaleString()}`;
+
+        // Add to total
+        totalAmount += subtotal;
+      });
+
+      // Update total amount in the UI
+      document.querySelector(".total-section").textContent = `Total: ₩${totalAmount.toLocaleString()}`;
+    }
+
+    function validateSelection(event) {
+      const selectedProducts = document.querySelectorAll('input[name="selectedProducts[]"]:checked');
+      if (selectedProducts.length === 0) {
+        event.preventDefault(); // Prevent form submission
+        alert("Please select at least one product to place an order.");
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      // Attach event listeners to quantity inputs
+      document.querySelectorAll(".quantity-input").forEach((input) => {
+        input.addEventListener("input", updateSubtotalAndTotal);
+      });
+
+      // Attach event listener to the Order button
+      const orderButton = document.querySelector("#orderButton");
+      if (orderButton) {
+        orderButton.addEventListener("click", validateSelection);
+      }
+
+      // Initial update of subtotal and total
+      updateSubtotalAndTotal();
+    });
+  </script>
+</head>
+<body>
+  <h2>Cart</h2>
+
+  <% if (cartItems.length === 0) { %>
+    <p class="empty-cart">Your cart is empty.</p>
+  <% } else { %>
+    <form action="/orders/checkout" method="POST" id="cartForm">
+      <table>
+        <thead>
+          <tr>
+            <th>Select</th>
+            <th>Product</th>
+            <th>Price</th>
+            <th>Quantity</th>
+            <th>Subtotal</th>
+            <th>Remove</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% let totalAmount = 0; %>
+          <% cartItems.forEach(item => { %>
+            <% const subtotal = item.price * item.quantity; %>
+            <% totalAmount += subtotal; %>
+            <tr>
+              <td>
+                <input type="checkbox" name="selectedProducts[]" value="<%= item.productId %>">
+              </td>
+              <td><%= item.name %></td>
+              <td class="price" data-price="<%= item.price %>">₩<%= item.price.toLocaleString() %></td>
+              <td>
+                <input 
+                  type="number" 
+                  class="quantity-input" 
+                  name="quantities[<%= item.productId %>]" 
+                  value="<%= item.quantity %>" 
+                  min="1"
+                  style="width: 50px;">
+              </td>
+              <td class="subtotal">₩<%= subtotal.toLocaleString() %></td>
+              <td>
+                <button type="submit" formaction="/store/cart/remove/<%= item.productId %>">Remove</button>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    
+      <div class="total-section">
+        Total: ₩<%= totalAmount.toLocaleString() %>
+      </div>
+    
+      <div style="text-align: center; margin-top: 20px;">
+        <button type="submit" id="orderButton">Order</button>
+      </div>
+    </form>
+  <% } %>
+</body>
+</html>

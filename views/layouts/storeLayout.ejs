@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title><%= title %> - Store</title>
+  <style>
+    .sidebar {
+      width: 200px;
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 100%;
+      background-color: #333;
+      padding-top: 20px;
+    }
+
+    .sidebar a {
+      display: block;
+      color: white;
+      padding: 10px;
+      text-decoration: none;
+    }
+
+    .sidebar a:hover {
+      background-color: #575757;
+    }
+
+    .main-content {
+      margin-left: 220px;
+      padding: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="sidebar">
+    <h3 style="color: white; text-align: center;">Store Panel</h3>
+    <a href="/store/dashboard">All Products</a>
+    <a href="/store/cart">Cart</a>
+    <a href="/orders/history">Order History</a>
+  </div>
+
+  <div class="main-content">
+    <%- body %> <!-- 뷰 파일 내용 렌더링 -->
+  </div>
+</body>
+</html>

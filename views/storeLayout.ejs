@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Store Dashboard</title>
+  <style>
+    /* 사이드바 스타일 */
+    .sidebar {
+      width: 200px;
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 100%;
+      background-color: #333;
+      padding-top: 20px;
+    }
+
+    .sidebar a {
+      display: block;
+      color: white;
+      padding: 10px;
+      text-decoration: none;
+    }
+
+    .sidebar a:hover {
+      background-color: #575757;
+    }
+
+    /* 메인 콘텐츠 스타일 */
+    .main-content {
+      margin-left: 220px;
+      padding: 20px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 사이드바 -->
+  <div class="sidebar">
+    <h3 style="color: white; text-align: center;">Store Panel</h3>
+    <a href="/store/dashboard">All Products</a>
+    <a href="/store/cart">Cart</a>
+    <a href="/orders/history">Order History</a>
+  </div>
+
+  <!-- 메인 콘텐츠 -->
+  <div class="main-content">
+    <%- body %> <!-- 각 페이지의 콘텐츠가 여기에 렌더링됩니다 -->
+  </div>
+
+</body>
+</html>

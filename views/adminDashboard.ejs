@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin Dashboard</title>
+  <style>
+
+    /* 카테고리 드롭다운 및 텍스트 스타일 */
+    .category-dropdown {
+      font-size: 24px; /* 텍스트 크기 24px */
+      padding: 12px;
+      width: 250px;
+    }
+
+    /* 이미지 첨부 스타일 */
+    .file-input-container {
+      margin-top: 20px;
+      display: flex; /* 수평 배치 */
+      align-items: center;
+      gap: 10px; /* 버튼들 간 간격 */
+    }
+
+    /* 파일 첨부 버튼 스타일 */
+    .file-input-btn {
+      padding: 10px 20px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+
+    .file-input-btn:hover {
+      background-color: #45a049;
+    }
+
+    /* 이미지 크기 고정 */
+    .product-image-container {
+      width: 100px;  /* 고정 크기 100x100 */
+      height: 100px;
+      overflow: hidden;
+      position: relative;
+      border-radius: 4px;
+    }
+
+    .product-image-container img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover; /* 이미지를 컨테이너에 맞게 채우기 */
+    }
+
+    /* 팝업 스타일 */
+    .popup {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      padding: 20px;
+      background-color: #fff;
+      border: 1px solid #ddd;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+    
+    .popup.show {
+      display: block;
+    }
+
+    /* 사이드바 스타일 */
+    .sidebar {
+      width: 200px;
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 100%;
+      background-color: #333;
+      padding-top: 20px;
+    }
+
+    .sidebar a {
+      display: block;
+      color: white;
+      padding: 10px;
+      text-decoration: none;
+    }
+
+    .sidebar a:hover {
+      background-color: #575757;
+    }
+
+    /* 메인 콘텐츠 스타일 */
+    .main-content {
+      margin-left: 220px;
+      padding: 20px;
+    }
+
+    /* 테이블 스타일 */
+    table {
+      margin-top: 20px;
+      border-collapse: collapse;
+      width: 100%;
+    }
+
+    table th, table td {
+      border: 1px solid #ddd;
+      padding: 8px;
+    }
+
+    table th {
+      background-color: #f4f4f4;
+    }
+
+    /* 버튼 스타일 */
+    button {
+      background-color: #007bff;
+      color: white;
+      border: none;
+      padding: 5px 10px;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    /* 필터 스타일 */
+    .filter-container {
+      margin-bottom: 20px;
+    }
+
+    /* 제출 버튼 스타일 */
+    .submit-container {
+      display: flex;  /* 수평 배치 */
+      justify-content: flex-start;
+      gap: 10px; /* 버튼들 간 간격 */
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 사이드바 -->
+  <div class="sidebar">
+    <h3 style="color: white; text-align: center;">Admin Panel</h3>
+    <a href="/admin/dashboard">Product Management</a>
+    <a href="/admin/orders">Order Management</a>
+    <a href="/admin/stores">Store Management</a>
+    <a href="/admin/settings">Settings</a>
+  </div>
+
+  <!-- 메인 콘텐츠 -->
+  <div class="main-content">
+    <h2>Product Management</h2>
+
+    <!-- 카테고리 필터 -->
+    <div class="filter-container">
+      <label for="categoryFilter" style="font-size: 22px;">First, Select Category:</label>
+      <select id="categoryFilter" class="category-dropdown" onchange="filterProducts()">
+        <option value="All">All</option>
+        <option value="Powder based I">Powder based I</option>
+        <option value="Sauce">Sauce</option>
+        <option value="Paper goods & etc.">Paper goods & etc.</option>
+      </select>
+    </div>
+
+    <!-- 제품 추가 버튼 -->
+    <button onclick="toggleAddProductForm()">Add New Product</button>
+
+    <!-- 제품 추가 폼 -->
+    <div id="addProductForm" style="display: none; margin-top: 20px;">
+      <form action="/admin/products/add" method="POST">
+        <label for="name">Product Name:</label>
+        <input type="text" name="name" required>
+
+        <label for="category">Category:</label>
+        <select name="category" required>
+          <option value="Powder based I">Powder based I</option>
+          <option value="Sauce">Sauce</option>
+          <option value="Paper goods & etc.">Paper goods & etc.</option>
+        </select>
+
+        <label for="price">Price:</label>
+        <input type="number" name="price" required>
+
+        <label for="stock">Stock:</label>
+        <input type="number" name="stock" required>
+
+        <!-- 이미지 첨부
+        <label for="image" id="imageLabel">Image:</label>
+        <div class="file-input-container">
+          <button type="button" class="file-input-btn" onclick="document.getElementById('file-input').click();">Attach Image</button>
+          <input type="file" id="file-input" style="display: none;" onchange="showAttachmentMessage()">
+          <p id="attachmentMessage" style="display: none; color: green; font-size: 16px;">Attachment complete!</p>
+        </div> -->
+
+        <!-- Image: Attach Image Submit 버튼을 한 줄로 배치 -->
+        <div class="submit-container">
+          <label for="image">Image:</label>
+          <button type="button" class="file-input-btn" onclick="document.getElementById('file-input').click();">Attach Image</button>
+          <input type="file" id="file-input" style="display: none;" onchange="showAttachmentMessage()">
+          <p id="attachmentMessage" style="display: none; color: green; font-size: 16px;">Attachment complete!</p>
+          <button type="submit">Submit</button>
+        </div>
+      </form>
+    </div>
+
+    <!-- 제품 리스트 -->
+    <% if (products.length === 0) { %>
+      <p>No products available.</p>
+    <% } else { %>
+      <table>
+        <thead>
+          <tr>
+            <th>Category</th>
+            <th>Product Name</th>
+            <th>Image</th>
+            <th>Price</th>
+            <th>Stock</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% products.forEach(product => { %>
+            <tr>
+              <td><%= product.category %></td>
+              <td><%= product.name %></td>
+              <td>
+                <div class="product-image-container">
+                  <img src="<%= product.image %>" alt="<%= product.name %>">
+                </div>
+              </td>
+              <td>₩<%= product.price.toLocaleString() %></td>
+              <td><%= product.stock %></td>
+              <td>
+                <form action="/admin/products/delete" method="POST" style="display:inline;">
+                  <input type="hidden" name="productId" value="<%= product._id %>">
+                  <button type="submit">Delete</button>
+                </form>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    <% } %>
+  </div>
+
+  <script>
+    function toggleAddProductForm() {
+      const form = document.getElementById('addProductForm');
+      form.style.display = form.style.display === 'none' ? 'block' : 'none';
+    }
+
+    function filterProducts() {
+      const selectedCategory = document.getElementById('categoryFilter').value;
+      const rows = document.querySelectorAll('table tbody tr');
+
+      rows.forEach(row => {
+        const category = row.querySelector('td:nth-child(1)').textContent.trim();
+        if (selectedCategory === 'All' || category === selectedCategory) {
+          row.style.display = ''; // 보이기
+        } else {
+          row.style.display = 'none'; // 숨기기
+        }
+      });
+    }
+
+    // 첨부 완료 메시지 표시
+    function showAttachmentMessage() {
+      const attachmentMessage = document.getElementById('attachmentMessage');
+      attachmentMessage.style.display = 'block';
+    }
+  </script>
+</body>
+</html>

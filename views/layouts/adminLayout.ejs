@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title><%= title %> - Admin</title> <!-- title 변수 사용 -->
+    <style>
+        /* 사이드바 스타일 */
+        .sidebar {
+            width: 200px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100%;
+            background-color: #333;
+            padding-top: 20px;
+        }
+
+        .sidebar a {
+            display: block;
+            color: white;
+            padding: 10px;
+            text-decoration: none;
+        }
+
+        .sidebar a:hover {
+            background-color: #575757;
+        }
+
+        /* 메인 콘텐츠 스타일 */
+        .main-content {
+            margin-left: 220px; /* 사이드바 너비만큼 오른쪽으로 이동 */
+            padding: 20px;
+        }
+
+        /* 헤더 스타일 */
+        h3 {
+            color: white;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <!-- 사이드바 -->
+    <div class="sidebar">
+        <h3>Admin Panel</h3>
+        <a href="/admin/dashboard">Product Management</a>
+        <a href="/admin/orders">Order Management</a>
+        <a href="/admin/stores">Store Management</a>
+        <a href="/admin/settings">Settings</a>
+    </div>
+
+    <!-- 메인 콘텐츠 -->
+    <div class="main-content">
+        <%- body %>
+    </div>
+</body>
+</html>

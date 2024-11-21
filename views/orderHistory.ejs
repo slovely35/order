@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Order History</title>
+  <style>
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    table th, table td {
+      border: 1px solid #ddd;
+      padding: 10px;
+      text-align: left;
+    }
+    table th {
+      background-color: #f4f4f4;
+    }
+    .details-link {
+      color: #007bff;
+      text-decoration: none;
+    }
+    .details-link:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <h1>Order History</h1>
+  <% if (orders.length === 0) { %>
+    <p>No orders found.</p>
+  <% } else { %>
+    <table>
+      <thead>
+        <tr>
+          <th>Order ID</th>
+          <th>Store Name</th>
+          <th>Total Amount</th>
+          <th>Status</th>
+          <th>Date</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% orders.forEach(order => { %>
+          <tr>
+            <td><%= order.formattedOrderNumber %></td>
+            <td><%= order.userId.storeName %></td>
+            <td>₩<%= order.totalAmount.toLocaleString() %></td>
+            <td><%= order.status %></td>
+            <td><%= new Date(order.createdAt).toLocaleString() %></td>
+            <td><a class="details-link" href="/orders/detail/<%= order._id %>">View Details</a></td>
+          </tr>
+        <% }); %>
+      </tbody>
+    </table>
+  <% } %>
+  <p><a href="/store/dashboard">Back to Store Dashboard</a></p>
+</body>
+</html>

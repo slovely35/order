@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin Settings</title>
+  <style>
+    /* 스타일 추가 */
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+
+    .sidebar {
+      width: 200px;
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 100%;
+      background-color: #333;
+      padding-top: 20px;
+    }
+
+    .sidebar a {
+      display: block;
+      color: white;
+      padding: 10px;
+      text-decoration: none;
+    }
+
+    .sidebar a:hover {
+      background-color: #575757;
+    }
+
+    .main-content {
+      margin-left: 220px;
+      padding: 20px;
+    }
+
+    h2 {
+      color: #333;
+    }
+
+    .success-message {
+      color: green;
+      margin-bottom: 20px;
+    }
+
+    form {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+    }
+
+    input[type="email"] {
+      padding: 8px;
+      margin-bottom: 10px;
+      width: 100%;
+      max-width: 400px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+
+    button {
+      background-color: #007bff;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 사이드바 -->
+  <div class="sidebar">
+    <h3 style="color: white; text-align: center;">Admin Panel</h3>
+    <a href="/admin/dashboard">Product Management</a>
+    <a href="/admin/orders">Order Management</a>
+    <a href="/admin/stores">Store Management</a>
+    <a href="/admin/settings">Settings</a>
+  </div>
+
+  <!-- 메인 콘텐츠 -->
+  <div class="main-content">
+    <h2>Admin Settings</h2>
+
+    <!-- 성공 메시지 -->
+    <% if (successMessage) { %>
+      <p class="success-message"><%= successMessage %></p>
+    <% } %>
+
+    <!-- 이메일 업데이트 폼 -->
+    <form action="/admin/settings/update-email" method="POST">
+      <label for="newEmail">New Email:</label>
+      <input type="email" name="newEmail" required>
+      <button type="submit">Update Email</button>
+    </form>
+    <p>현재 관리자 Email: <strong><%= adminEmail %></strong></p>
+  </div>
+
+</body>
+</html>

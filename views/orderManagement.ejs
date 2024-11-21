@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin Orders</title>
+  <style>
+    /* 사이드바 스타일 */
+    .sidebar {
+      width: 200px;
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 100%;
+      background-color: #333;
+      padding-top: 20px;
+    }
+
+    .sidebar a {
+      display: block;
+      color: white;
+      padding: 10px;
+      text-decoration: none;
+    }
+
+    .sidebar a:hover {
+      background-color: #575757;
+    }
+
+    /* 메인 콘텐츠 스타일 */
+    .main-content {
+      margin-left: 220px;
+      padding: 20px;
+    }
+
+    /* 테이블 스타일 */
+    table {
+      margin-top: 20px;
+      border-collapse: collapse;
+      width: 100%;
+    }
+
+    table th, table td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: left;
+    }
+
+    table th {
+      background-color: #f4f4f4;
+      text-transform: uppercase;
+      font-size: 14px;
+      font-weight: bold;
+    }
+
+    table tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+
+    table tr:hover {
+      background-color: #f1f1f1;
+    }
+
+    .order-status {
+      font-weight: bold;
+      text-transform: capitalize;
+    }
+
+    .info {
+      font-size: 14px;
+      color: #555;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 사이드바 -->
+  <div class="sidebar">
+    <h3 style="color: white; text-align: center;">Admin Panel</h3>
+    <a href="/admin/dashboard">Product Management</a>
+    <a href="/admin/orders">Order Management</a>
+    <a href="/admin/stores">Store Management</a>
+    <a href="/admin/settings">Settings</a>
+  </div>
+
+  <!-- 메인 콘텐츠 -->
+  <div class="main-content">
+    <h2>Order Management</h2>
+
+    <% if (orders.length === 0) { %>
+      <p>No orders found.</p>
+    <% } else { %>
+      <table>
+        <thead>
+          <tr>
+            <th>Order ID</th>
+            <th>Store Name</th>
+            <th>Store Address</th>
+            <th>Total Amount</th>
+            <th>Status</th>
+            <th>Order Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% orders.forEach(order => { %>
+            <tr>
+              <td><%= order._id %></td>
+              <td><%= order.userId ? order.userId.storeName : 'N/A' %></td>
+              <td><%= order.userId ? order.userId.address : 'N/A' %></td>
+              <td>₩<%= order.totalAmount.toLocaleString() %></td>
+              <td class="order-status"><%= order.status %></td>
+              <td><%= new Date(order.createdAt).toLocaleDateString() %></td> <!-- 주문 날짜 표시 -->
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    <% } %>
+  </div>
+
+</body>
+</html>

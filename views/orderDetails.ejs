@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Order Detail</title>
+  <style>
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    table th, table td {
+      border: 1px solid #ddd;
+      padding: 10px;
+      text-align: left;
+    }
+    table th {
+      background-color: #f4f4f4;
+    }
+  </style>
+</head>
+<body>
+  <h1>Order Detail</h1>
+  <p><strong>Order ID:</strong> <%= order.formattedOrderNumber %></p> <!-- 주문 번호 변경 -->
+  <p><strong>Store Name:</strong> <%= order.userId.storeName %></p>
+  <p><strong>Address:</strong> <%= order.userId.address %></p>
+  <p><strong>Total Amount:</strong> ₩<%= order.totalAmount.toLocaleString() %></p>
+  <p><strong>Status:</strong> <%= order.status %></p>
+  <h2>Products</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Product Name</th>
+        <th>Price</th>
+        <th>Quantity</th>
+        <th>Subtotal</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% order.products.forEach(product => { %>
+        <tr>
+          <td><%= product.name %></td>
+          <td>₩<%= product.price.toLocaleString() %></td>
+          <td><%= product.quantity %></td>
+          <td>₩<%= (product.price * product.quantity).toLocaleString() %></td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+  <p><a href="/orders/history">Back to Order History</a></p>
+</body>
+</html>
