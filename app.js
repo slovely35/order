@@ -1,4 +1,5 @@
 require('dotenv').config();
+const mongoose = require('mongoose');
 const express = require('express');
 const connectFlash = require('connect-flash');
 const connectDB = require('./config/db');
