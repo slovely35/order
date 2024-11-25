@@ -25,6 +25,21 @@ const app = express();
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
+// MongoDB URI 환경 변수에서 가져오기
+const uri = process.env.MONGO_URI;
+
+
+// MongoDB URI가 없을 경우 오류 메시지 출력
+if (!uri) {
+  console.error('MongoDB URI가 환경 변수에서 정의되지 않았습니다.');
+  process.exit(1);  // 종료 코드 1로 프로세스 종료
+}
+
+// MongoDB 연결
+mongoose.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true })
+  .then(() => console.log('MongoDB 연결 성공'))
+  .catch((err) => console.error('MongoDB 연결 오류:', err));
+
 // MongoDB 연결
 connectDB();
 
