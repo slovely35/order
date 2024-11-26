@@ -28,15 +28,24 @@ router.get('/cart', isStoreAccount, async (req, res) => {
 
   try {
     const cart = await Cart.findOne({ userId }).populate('items.productId');
-    const cartItems = cart
-      ? cart.items.map(item => ({
-          name: item.productId.name,
-          price: item.productId.price,
-          quantity: item.quantity,
-          subtotal: item.productId.price * item.quantity,
-          productId: item.productId._id,
-        }))
-      : [];
+    
+    // 장바구니가 없거나, items 배열이 비어 있는 경우 처리
+    if (!cart || !cart.items.length) {
+      return res.render('storeCart', {
+        title: 'Your Cart',
+        cartItems: [], // 장바구니에 아이템이 없으면 빈 배열 전달
+        message: 'Your cart is empty.',
+      });
+    }
+
+    // 장바구니 아이템 정보 가공
+    const cartItems = cart.items.map(item => ({
+      name: item.productId ? item.productId.name : 'Unknown Product',  // productId가 없는 경우 처리
+      price: item.productId ? item.productId.price : 0, // 가격이 없는 경우 0으로 처리
+      quantity: item.quantity,
+      subtotal: (item.productId ? item.productId.price : 0) * item.quantity,
+      productId: item.productId ? item.productId._id : null,
+    }));
 
     res.render('storeCart', {
       title: 'Your Cart',
@@ -44,7 +53,13 @@ router.get('/cart', isStoreAccount, async (req, res) => {
     });
   } catch (error) {
     console.error('Error loading cart:', error);
-    res.status(500).send('Error loading cart');
+    
+    // 오류 메시지 표시
+    res.status(500).render('storeCart', {
+      title: 'Your Cart',
+      cartItems: [],
+      message: 'Error loading cart. Please try again later.',
+    });
   }
 });
 

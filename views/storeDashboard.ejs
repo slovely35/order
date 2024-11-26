@@ -107,16 +107,17 @@
   <div class="main-content">
     <h2>All Products</h2>
 
-    <!-- 카테고리 드롭다운 -->
-    <div class="category-dropdown">
-      <label for="categorySelect" style="font-size: 20px;">First, Select Product category.</label>
-      <select id="categorySelect">
-        <option value="all">All</option>
-        <option value="powderBased">Powder based I</option>
-        <option value="sauce">Sauce</option>
-        <option value="paperGoods">Paper goods & etc.</option>
-      </select>
-    </div>
+  <!-- 카테고리 필터 -->
+  <div class="filter-container">
+    <label for="categoryFilter" style="font-size: 22px;">First, Select Category:</label>
+    <select id="categoryFilter" class="category-dropdown" onchange="filterProducts()">
+      <option value="All">All</option>
+      <option value="Powder based I">Powder based I</option>
+      <option value="Sauce">Sauce</option>
+      <option value="Paper goods & etc.">Paper goods & etc.</option>
+    </select>
+  </div>
+
 
     <% if (products.length === 0) { %>
       <p>No products available.</p>
@@ -172,24 +173,21 @@
   </div>
 
   <script>
-    // 카테고리 선택 시 필터링
-    document.getElementById('categorySelect').addEventListener('change', function() {
-      const selectedCategory = this.value;
-      const productRows = document.querySelectorAll('.product-row');
+    function filterProducts() {
+      const selectedCategory = document.getElementById('categoryFilter').value;
+      const products = document.querySelectorAll('#productsTable .product');
 
-      productRows.forEach(row => {
-        const rowCategory = row.getAttribute('data-category');
-        
-        if (selectedCategory === 'all' || rowCategory === selectedCategory) {
-          row.style.display = '';  // 해당 카테고리는 보이도록
+      products.forEach(product => {
+        const category = product.getAttribute('data-category');
+
+        // 필터링 조건: 'All' 선택 시 모든 제품을 표시하고, 그 외 카테고리 선택 시 해당 카테고리만 표시
+        if (selectedCategory === 'All' || category === selectedCategory) {
+          product.style.display = ''; // 보이기
         } else {
-          row.style.display = 'none';  // 다른 카테고리는 숨김
+          product.style.display = 'none'; // 숨기기
         }
       });
-    });
-
-    // 기본적으로 페이지 로드 시 "All"로 모든 제품을 표시
-    document.getElementById('categorySelect').dispatchEvent(new Event('change'));
+    }
   </script>
 
 </body>
