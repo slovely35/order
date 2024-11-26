@@ -44,6 +44,24 @@ router.get('/orders', async (req, res) => {
     }
   });
 
+// 스토어 삭제 시 해당 스토어와 관련된 주문도 삭제하는 코드 예시
+router.delete('/stores/:storeId', isAdmin, async (req, res) => {
+  try {
+    const storeId = req.params.storeId;
+
+    // 해당 스토어의 주문 삭제
+    await Order.deleteMany({ storeId: storeId });
+
+    // 스토어 삭제
+    await User.deleteOne({ _id: storeId, role: 'storeOwner' });
+
+    res.status(200).send('Store and related orders deleted successfully');
+  } catch (error) {
+    console.error('Error deleting store:', error);
+    res.status(500).send('Error deleting store');
+  }
+});
+
 // 제품 관리 페이지
 router.get('/dashboard', isAdmin, async (req, res) => {
   try {
