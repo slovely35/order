@@ -22,6 +22,7 @@ router.get('/dashboard', isStoreAccount, async (req, res) => {
   }
 });
 
+
 // 장바구니 페이지
 router.get('/cart', isStoreAccount, async (req, res) => {
   const userId = req.user._id;
@@ -29,23 +30,34 @@ router.get('/cart', isStoreAccount, async (req, res) => {
   try {
     const cart = await Cart.findOne({ userId }).populate('items.productId');
     
+    // 장바구니 데이터 디버깅
+    console.log('Cart:', cart);  // cart 객체의 내용을 출력하여 제대로 불러와졌는지 확인
+
     // 장바구니가 없거나, items 배열이 비어 있는 경우 처리
     if (!cart || !cart.items.length) {
       return res.render('storeCart', {
         title: 'Your Cart',
-        cartItems: [], // 장바구니에 아이템이 없으면 빈 배열 전달
+        cartItems: [],
         message: 'Your cart is empty.',
       });
     }
 
     // 장바구니 아이템 정보 가공
-    const cartItems = cart.items.map(item => ({
-      name: item.productId ? item.productId.name : 'Unknown Product',  // productId가 없는 경우 처리
-      price: item.productId ? item.productId.price : 0, // 가격이 없는 경우 0으로 처리
-      quantity: item.quantity,
-      subtotal: (item.productId ? item.productId.price : 0) * item.quantity,
-      productId: item.productId ? item.productId._id : null,
-    }));
+    const cartItems = cart.items.map(item => {
+      // Check if productId exists
+      const product = item.productId;
+      const productName = product ? product.name : 'Unknown Product';
+      const productPrice = product ? product.price : 0;
+
+      console.log('Item:', item);  // 각 아이템 출력하여 productId가 잘 로드되었는지 확인
+      return {
+        name: productName,
+        price: productPrice,
+        quantity: item.quantity,
+        subtotal: productPrice * item.quantity,
+        productId: product ? product._id : null,
+      };
+    });
 
     res.render('storeCart', {
       title: 'Your Cart',
@@ -54,7 +66,7 @@ router.get('/cart', isStoreAccount, async (req, res) => {
   } catch (error) {
     console.error('Error loading cart:', error);
     
-    // 오류 메시지 표시
+    // 오류 메시지 출력 (디버깅용)
     res.status(500).render('storeCart', {
       title: 'Your Cart',
       cartItems: [],
@@ -62,6 +74,7 @@ router.get('/cart', isStoreAccount, async (req, res) => {
     });
   }
 });
+
 
 
 // 장바구니에 상품 추가
@@ -104,6 +117,8 @@ router.post('/cart/add', isStoreAccount, async (req, res) => {
         } else {
           cart.items.push({ productId, quantity });
         }
+      } else {
+        console.error(`Invalid quantity for product ${productId}: ${quantity}`);
       }
     });
 
@@ -130,7 +145,12 @@ router.post('/cart/remove/:productId', isStoreAccount, async (req, res) => {
     }
 
     // 장바구니에서 해당 상품 제거
-    cart.items = cart.items.filter(item => item.productId.toString() !== productId);
+    const itemIndex = cart.items.findIndex(item => item.productId.toString() === productId);
+    if (itemIndex === -1) {
+      throw new Error('Product not found in cart.');
+    }
+
+    cart.items.splice(itemIndex, 1);
 
     await cart.save();
     console.log(`Product ${productId} removed from cart for user ${userId}`);
@@ -142,24 +162,31 @@ router.post('/cart/remove/:productId', isStoreAccount, async (req, res) => {
 });
 
 
-router.post('/cart/update', isStoreAccount, async (req, res) => {
-  try {
-    const { quantities } = req.body;
 
-    if (!quantities || Object.keys(quantities).length === 0) {
-      return res.status(400).send('No products selected for update.');
+router.post('/cart/update', isStoreAccount, async (req, res) => {
+  const { quantities } = req.body;
+
+  if (!quantities || Object.keys(quantities).length === 0) {
+    return res.status(400).send('No products selected for update.');
+  }
+
+  try {
+    const cart = await Cart.findOne({ userId: req.user._id });
+    if (!cart) {
+      throw new Error('Cart not found.');
     }
 
-    // Update quantities in cart
-    const cart = await Cart.findOne({ userId: req.user._id });
-
-    cart.items = cart.items.map((item) => {
+    cart.items = cart.items.map(item => {
       const newQuantity = quantities[item.productId] ? parseInt(quantities[item.productId], 10) : item.quantity;
+      if (isNaN(newQuantity) || newQuantity <= 0) {
+        console.error(`Invalid quantity for product ${item.productId}: ${newQuantity}`);
+        return item; // 잘못된 수량은 수정하지 않음
+      }
       return { ...item, quantity: newQuantity };
     });
 
     await cart.save();
-    res.redirect('/store/cart'); // Refresh cart page
+    res.redirect('/store/cart'); // 장바구니 페이지로 리디렉션
   } catch (error) {
     console.error('Error updating cart:', error);
     res.status(500).send('Error updating cart');
