@@ -94,13 +94,21 @@ router.post('/checkout', isStoreAccount, async (req, res) => {
         // 사용자 정보 가져오기
         const user = await User.findById(req.user._id);
 
-        // HTML 템플릿
-        const emailContent = `
+        // orderDate를 영어 형식으로 변환
+        const orderDateFormatted = new Date(orderDate).toLocaleDateString('en-US', {
+            weekday: 'long', // 요일
+            year: 'numeric',
+            month: 'long',   // 월
+            day: 'numeric'   // 일
+        });
+  
+    // HTML 템플릿
+    const emailContent = `
         <h2 style="font-size: 18px;">New Order Received</h2>
         <p><strong style="font-size: 20px; font-weight:bold;">Store Name: ${user.storeName}</strong></p>
-        <p><strong style="font-size: 20px;">가맹점:</strong> ${user.storeName}</p>
+        <p><strong style="font-size: 20px;">Store:</strong> ${user.storeName}</p>
         <p><strong style="font-size: 16px;">Address:</strong> ${user.address}</p>
-        <p><strong style="font-size: 16px;">Order Date:</strong> ${orderDate}</p>
+        <p><strong style="font-size: 16px;">Order Date:</strong> ${orderDateFormatted}</p>
         <h3 style="font-size: 16px;">Order Details:</h3>
         <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
             <thead>
@@ -118,7 +126,7 @@ router.post('/checkout', isStoreAccount, async (req, res) => {
                                 <td style="padding: 10px; border: 1px solid #ddd;">${item.name}</td>
                                 <td style="padding: 10px; border: 1px solid #ddd;">${item.quantity}</td>
                                 <td style="padding: 10px; border: 1px solid #ddd;">₩${item.subtotal.toLocaleString()}</td>
-                            </tr>` 
+                            </tr>`
                     )
                     .join('')}
             </tbody>
@@ -130,6 +138,7 @@ router.post('/checkout', isStoreAccount, async (req, res) => {
             <p style="font-size: 16px;">Signature: _______________________________</p>
         </div>
     `;
+  
 
         // PDF 파일 경로 설정
         const pdfFilePath = path.join(__dirname, 'order.pdf');
