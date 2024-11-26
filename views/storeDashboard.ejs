@@ -173,21 +173,21 @@
   </div>
 
   <script>
-    function filterProducts() {
-      const selectedCategory = document.getElementById('categoryFilter').value;
-      const products = document.querySelectorAll('#productsTable .product');
+  function filterProducts() {
+    const selectedCategory = document.getElementById('categoryFilter').value;
+    const productRows = document.querySelectorAll('#productTableBody .product-row');
 
-      products.forEach(product => {
-        const category = product.getAttribute('data-category');
+    productRows.forEach(productRow => {
+      const category = productRow.getAttribute('data-category');
 
-        // 필터링 조건: 'All' 선택 시 모든 제품을 표시하고, 그 외 카테고리 선택 시 해당 카테고리만 표시
-        if (selectedCategory === 'All' || category === selectedCategory) {
-          product.style.display = ''; // 보이기
-        } else {
-          product.style.display = 'none'; // 숨기기
-        }
-      });
-    }
+      // 필터링 조건: 'All' 선택 시 모든 제품을 표시하고, 그 외 카테고리 선택 시 해당 카테고리만 표시
+      if (selectedCategory === 'All' || category === selectedCategory) {
+        productRow.style.display = ''; // 보이기
+      } else {
+        productRow.style.display = 'none'; // 숨기기
+      }
+    });
+  }
   </script>
 
 </body>
