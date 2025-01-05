@@ -26,6 +26,8 @@ const app = express();
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
+app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
+
 // MongoDB URI 환경 변수에서 가져오기
 const uri = process.env.MONGO_URI;
 

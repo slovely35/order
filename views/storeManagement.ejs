@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <title>Store Management</title>
   <style>
-    /* 사이드바 스타일 */
     .sidebar {
       width: 200px;
       position: fixed;
@@ -26,13 +25,11 @@
       background-color: #575757;
     }
 
-    /* 메인 콘텐츠 스타일 */
     .main-content {
       margin-left: 220px;
       padding: 20px;
     }
 
-    /* 테이블 스타일 */
     table {
       margin-top: 20px;
       border-collapse: collapse;
@@ -52,57 +49,175 @@
       font-weight: bold;
     }
 
-    table tr:nth-child(even) {
-      background-color: #f9f9f9;
+    .popup {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: white;
+      padding: 20px;
+      border: 1px solid #ccc;
+      z-index: 1000;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
     }
 
-    table tr:hover {
-      background-color: #f1f1f1;
+    .popup h3 {
+      margin-top: 0;
     }
 
-    .order-status {
-      font-weight: bold;
-      text-transform: capitalize;
+    .popup input {
+      width: 100%;
+      padding: 8px;
+      margin: 10px 0;
+      border: 1px solid #ddd;
     }
 
-    .info {
-      font-size: 14px;
-      color: #555;
+    .popup button {
+      margin-top: 10px;
+      padding: 10px 15px;
+      border: none;
+      cursor: pointer;
+      background-color: #007bff;
+      color: white;
+    }
+
+    .popup button:hover {
+      background-color: #0056b3;
+    }
+
+    .popup button.cancel {
+      background-color: #ccc;
+      color: black;
+    }
+
+    .popup button.cancel:hover {
+      background-color: #aaa;
     }
   </style>
+  <script>
+    // Open Edit Email Popup
+    function editEmail(storeId) {
+      const emailSpan = document.getElementById(`email-${storeId}`);
+      const currentEmail = emailSpan.textContent.trim();
+
+      document.getElementById("newEmail").value = currentEmail;
+      document.getElementById("saveEmailButton").onclick = function () {
+        saveEmail(storeId);
+      };
+
+      document.getElementById("editEmailPopup").style.display = "block";
+    }
+
+    function closeEditEmailPopup() {
+      document.getElementById("editEmailPopup").style.display = "none";
+    }
+
+    function saveEmail(storeId) {
+      const newEmail = document.getElementById("newEmail").value.trim();
+
+      fetch(`/admin/stores/update-email/${storeId}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email: newEmail }),
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          if (data.success) {
+            alert("Email updated successfully!");
+            document.getElementById(`email-${storeId}`).textContent = newEmail;
+          } else {
+            alert(data.message || "Failed to update email.");
+          }
+          closeEditEmailPopup();
+        })
+        .catch((error) => {
+          console.error("Error updating email:", error);
+          alert("An error occurred. Please try again.");
+          closeEditEmailPopup();
+        });
+    }
+
+    // Open Edit Password Popup
+    function editPassword(storeId) {
+      document.getElementById("savePasswordButton").onclick = function () {
+        savePassword(storeId);
+      };
+      document.getElementById("editPasswordPopup").style.display = "block";
+    }
+
+    function closeEditPasswordPopup() {
+      document.getElementById("editPasswordPopup").style.display = "none";
+    }
+
+    function savePassword(storeId) {
+      const newPassword = document.getElementById("newPassword").value.trim();
+
+      fetch(`/admin/stores/update-password/${storeId}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ password: newPassword }),
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          if (data.success) {
+            alert("Password updated successfully!");
+          } else {
+            alert(data.message || "Failed to update password.");
+          }
+          closeEditPasswordPopup();
+        })
+        .catch((error) => {
+          console.error("Error updating password:", error);
+          alert("An error occurred. Please try again.");
+          closeEditPasswordPopup();
+        });
+    }
+  </script>
 </head>
 <body>
-
-  <!-- 사이드바 -->
   <div class="sidebar">
     <h3 style="color: white; text-align: center;">Admin Panel</h3>
     <a href="/admin/dashboard">Product Management</a>
     <a href="/admin/orders">Order Management</a>
     <a href="/admin/stores">Store Management</a>
-    <a href="/admin/settings">Settings</a>
+    <a href="/auth/logout" style="color: red; font-weight: bold;">Logout</a>
   </div>
 
-  <!-- 메인 콘텐츠 -->
   <div class="main-content">
     <h2>Store Management</h2>
-
     <% if (stores.length === 0) { %>
-      <p>There are no registered store</p>
+      <p>There are no registered stores.</p>
     <% } else { %>
-      <table border="1">
+      <table>
         <thead>
           <tr>
             <th>Store Name</th>
-            <th>Address</th>
+            <th>Town</th>
+            <th>State</th>
+            <th>Zipcode</th>
             <th>Email</th>
+            <th>Actions</th>
           </tr>
         </thead>
         <tbody>
           <% stores.forEach(store => { %>
             <tr>
               <td><%= store.storeName %></td>
-              <td><%= store.address %></td>
-              <td><%= store.email %></td>
+              <td><%= store.address.town %></td>
+              <td><%= store.address.state %></td>
+              <td><%= store.address.zipcode %></td>
+              <td>
+                <span id="email-<%= store._id %>"><%= store.email %></span>
+                <button onclick="editEmail('<%= store._id %>')">Edit Email</button>
+              </td>
+              <td>
+                <button onclick="editPassword('<%= store._id %>')">Edit Password</button>
+              </td>
             </tr>
           <% }) %>
         </tbody>
@@ -110,5 +225,20 @@
     <% } %>
   </div>
 
+  <!-- Edit Email Popup -->
+  <div id="editEmailPopup" class="popup">
+    <h3>Edit Email</h3>
+    <input type="text" id="newEmail" placeholder="Enter new email">
+    <button id="saveEmailButton">Save</button>
+    <button class="cancel" onclick="closeEditEmailPopup()">Cancel</button>
+  </div>
+
+  <!-- Edit Password Popup -->
+  <div id="editPasswordPopup" class="popup">
+    <h3>Edit Password</h3>
+    <input type="password" id="newPassword" placeholder="Enter new password">
+    <button id="savePasswordButton">Save</button>
+    <button class="cancel" onclick="closeEditPasswordPopup()">Cancel</button>
+  </div>
 </body>
 </html>

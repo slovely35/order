@@ -134,6 +134,16 @@
       justify-content: flex-start;
       gap: 10px; /* 버튼들 간 간격 */
     }
+
+    .sidebar a[href="/auth/logout"] {
+      color: red;
+      font-weight: bold;
+      margin-top: 20px;
+    }
+
+    .sidebar a[href="/auth/logout"]:hover {
+      background-color: #ffcccc;
+    }
   </style>
 </head>
 <body>
@@ -145,6 +155,7 @@
     <a href="/admin/orders">Order Management</a>
     <a href="/admin/stores">Store Management</a>
     <a href="/admin/settings">Settings</a>
+    <a href="/auth/logout" style="color: red; font-weight: bold;">Logout</a> <!-- 로그아웃 버튼 -->
   </div>
 
   <!-- 메인 콘텐츠 -->
@@ -156,9 +167,10 @@
       <label for="categoryFilter" style="font-size: 22px;">First, Select Category:</label>
       <select id="categoryFilter" class="category-dropdown" onchange="filterProducts()">
         <option value="All">All</option>
-        <option value="Powder based I">Powder based I</option>
-        <option value="Sauce">Sauce</option>
-        <option value="Paper goods & etc.">Paper goods & etc.</option>
+        <option value="Mixed Powder">Mixed Powder</option>
+        <option value="Sauce Items">Sauce Items</option>
+        <option value="Paper Goods">Paper Goods</option>
+        <option value="ETC">ETC</option>
       </select>
     </div>
 
@@ -167,15 +179,16 @@
 
     <!-- 제품 추가 폼 -->
     <div id="addProductForm" style="display: none; margin-top: 20px;">
-      <form action="/admin/products/add" method="POST">
+      <form action="/admin/products/add" method="POST" enctype="multipart/form-data">
         <label for="name">Product Name:</label>
         <input type="text" name="name" required>
 
         <label for="category">Category:</label>
         <select name="category" required>
-          <option value="Powder based I">Powder based I</option>
-          <option value="Sauce">Sauce</option>
-          <option value="Paper goods & etc.">Paper goods & etc.</option>
+          <option value="Mixed Powder">Mixed Powder</option>
+          <option value="Sauce Items">Sauce Items</option>
+          <option value="Paper Goods">Paper Goods</option>
+          <option value="ETC">ETC</option>
         </select>
 
         <label for="price">Price:</label>
@@ -184,21 +197,17 @@
         <label for="stock">Stock:</label>
         <input type="number" name="stock" required>
 
-        <!-- 이미지 첨부
-        <label for="image" id="imageLabel">Image:</label>
         <div class="file-input-container">
           <button type="button" class="file-input-btn" onclick="document.getElementById('file-input').click();">Attach Image</button>
-          <input type="file" id="file-input" style="display: none;" onchange="showAttachmentMessage()">
+          <input type="file" id="file-input" name="image" style="display: none;" onchange="showAttachmentMessage(event)">
           <p id="attachmentMessage" style="display: none; color: green; font-size: 16px;">Attachment complete!</p>
-        </div> -->
-
-        <!-- Image: Attach Image Submit 버튼을 한 줄로 배치 -->
-        <div class="submit-container">
-          <label for="image">Image:</label>
-          <button type="button" class="file-input-btn" onclick="document.getElementById('file-input').click();">Attach Image</button>
-          <input type="file" id="file-input" style="display: none;" onchange="showAttachmentMessage()">
-          <p id="attachmentMessage" style="display: none; color: green; font-size: 16px;">Attachment complete!</p>
-          <button type="submit">Submit</button>
+          <img id="imagePreview" style="display: none; width: 100px; height: 100px; margin-top: 10px;" alt="Image Preview">
+        </div>
+        
+        <div style="margin-top: 20px;">
+          <button type="submit" style="padding: 10px 20px; background-color: #007bff; color: white; border: none; cursor: pointer;">
+            Save Product
+          </button>
         </div>
       </form>
     </div>
@@ -225,10 +234,10 @@
               <td><%= product.name %></td>
               <td>
                 <div class="product-image-container">
-                  <img src="<%= product.image %>" alt="<%= product.name %>">
+                  <img src="<%= product.image ? product.image : '/uploads/default-image.png' %>" alt="<%= product.name %>">
                 </div>
               </td>
-              <td>₩<%= product.price.toLocaleString() %></td>
+              <td>$<%= product.price.toFixed(2) %></td>
               <td><%= product.stock %></td>
               <td>
                 <form action="/admin/products/delete" method="POST" style="display:inline;">
@@ -264,10 +273,18 @@
     }
 
     // 첨부 완료 메시지 표시
-    function showAttachmentMessage() {
+    function showAttachmentMessage(event) {
       const attachmentMessage = document.getElementById('attachmentMessage');
       attachmentMessage.style.display = 'block';
+
+      const fileInput = event.target;
+      if (fileInput.files && fileInput.files[0]) {
+        const previewImage = document.getElementById('imagePreview');
+        previewImage.src = URL.createObjectURL(fileInput.files[0]);
+        previewImage.style.display = 'block'; // 이미지 미리보기 표시
+      }
     }
+
   </script>
 </body>
 </html>

@@ -31,14 +31,14 @@ router.post('/login', (req, res, next) => {
 });
 
 // 로그아웃 라우트
-router.get('/logout', async (req, res, next) => {
-  try {
-    await req.logout(); // 최신 Passport에서 비동기로 처리
-    req.flash('success_msg', 'You have logged out successfully.');
-    res.redirect('/auth/login');
-  } catch (error) {
-    next(error);
-  }
+router.get('/logout', (req, res) => {
+  res.clearCookie('authToken'); // 인증 토큰 쿠키 제거
+  req.session.destroy((err) => {
+    if (err) {
+      console.error('Error destroying session:', err);
+    }
+    res.redirect('/auth/login'); // 로그인 페이지로 리다이렉트
+  });
 });
 
 // 회원가입 페이지 라우트

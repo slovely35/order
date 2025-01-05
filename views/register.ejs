@@ -57,20 +57,36 @@
   <form action="/auth/register" method="POST">
     <label for="storeName">Store Name:</label>
     <input type="text" name="storeName" value="<%= locals.storeName || '' %>" required>
-    
-    <label for="address">Address:</label>
-    <input type="text" name="address" value="<%= locals.address || '' %>" required>
-    
+
+    <fieldset>
+      <legend>Address:</legend>
+      <label for="town">Town:</label>
+      <input type="text" name="address[town]" value="<%= locals.address ? locals.address.town || '' : '' %>" required>
+
+      <label for="state">State:</label>
+      <input type="text" name="address[state]" value="<%= locals.address ? locals.address.state || '' : '' %>" required>
+
+      <label for="zipcode">Zipcode:</label>
+      <input type="text" name="address[zipcode]" value="<%= locals.address ? locals.address.zipcode || '' : '' %>" required>
+    </fieldset>
+
     <label for="email">Email:</label>
     <input type="email" name="email" value="<%= locals.email || '' %>" required>
+    <label for="confirmEmail">Confirm Email:</label>
+    <input type="email" name="confirmEmail" required>
 
     <label for="password">Password:</label>
     <input type="password" name="password" required>
-    
+    <label for="confirmPassword">Confirm Password:</label>
+    <input type="password" name="confirmPassword" required>
+
     <button type="submit">Sign Up</button>
   </form>
 
   <!-- 로그인 페이지로 이동 -->
   <p>Already have an account? <a href="/auth/login">Login</a></p>
 </body>
+
+
+
 </html>

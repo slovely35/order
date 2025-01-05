@@ -61,8 +61,8 @@
       color: #555;
     }
 
-      /* Simple styling for the popup */
-      .popup {
+    /* 팝업 스타일 */
+    .popup {
       display: none;
       position: fixed;
       top: 50%;
@@ -73,57 +73,121 @@
       box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
       border-radius: 5px;
       text-align: center;
+      z-index: 1000;
+    }
+
+    .popup button {
+      margin-top: 10px;
+      padding: 5px 10px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+
+    .popup button:hover {
+      background-color: #0056b3;
     }
   </style>
-  <script>
-    // JavaScript for dynamic subtotal and total updates
-    function updateSubtotalAndTotal() {
-      let totalAmount = 0;
+<script>
+    function validateStockAndSubmit(event) {
+        event.preventDefault(); // 기본 폼 제출 방지
 
-      // Update subtotals and calculate total
-      document.querySelectorAll("tbody tr").forEach((row) => {
-        const price = parseFloat(row.querySelector(".price").dataset.price);
-        const quantityInput = row.querySelector(".quantity-input");
-        const subtotalElement = row.querySelector(".subtotal");
+        const form = document.getElementById("cartForm");
+        const formData = new FormData(form);
 
-        const quantity = parseInt(quantityInput.value) || 0;
-
-        // Calculate and update subtotal
-        const subtotal = price * quantity;
-        subtotalElement.textContent = `₩${subtotal.toLocaleString()}`;
-
-        // Add to total
-        totalAmount += subtotal;
-      });
-
-      // Update total amount in the UI
-      document.querySelector(".total-section").textContent = `Total: ₩${totalAmount.toLocaleString()}`;
+        fetch(form.action, {
+            method: "POST",
+            body: new URLSearchParams(formData), // 폼 데이터를 URL 인코딩하여 전송
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+            },
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(data => {
+                    if (data && data.message) {
+                        showPopup(data.message); // 서버에서 받은 메시지를 팝업으로 표시
+                    } else {
+                        showPopup("An error occurred while processing your order.");
+                    }
+                });
+            } else {
+                return response.json().then(data => {
+                    if (data.success) {
+                        alert("Order placed successfully!");
+                        window.location.href = "/orders/history"; // 주문 완료 후 페이지 이동
+                    }
+                });
+            }
+        })
+        .catch(error => {
+            console.error("Error processing order:", error);
+            showPopup("An unexpected error occurred.");
+        });
     }
 
-    function validateSelection(event) {
-      const selectedProducts = document.querySelectorAll('input[name="selectedProducts[]"]:checked');
-      if (selectedProducts.length === 0) {
-        event.preventDefault(); // Prevent form submission
-        alert("Please select at least one product to place an order.");
-      }
+
+    function showPopup(message) {
+        const popup = document.getElementById("stockPopup");
+        const popupMessage = document.getElementById("popupMessage");
+
+        popupMessage.textContent = message; // 팝업 메시지 설정
+        popup.style.display = "block";
+    }
+
+    function closePopup() {
+        const popup = document.getElementById("stockPopup");
+        popup.style.display = "none";
     }
 
     document.addEventListener("DOMContentLoaded", () => {
-      // Attach event listeners to quantity inputs
-      document.querySelectorAll(".quantity-input").forEach((input) => {
-        input.addEventListener("input", updateSubtotalAndTotal);
-      });
-
-      // Attach event listener to the Order button
-      const orderButton = document.querySelector("#orderButton");
+      const orderButton = document.getElementById("orderButton");
       if (orderButton) {
-        orderButton.addEventListener("click", validateSelection);
+          orderButton.addEventListener("click", validateStockAndSubmit);
       }
 
-      // Initial update of subtotal and total
+      // **수정된 부분: closePopup 버튼에 이벤트 리스너 추가**
+      const closePopupButton = document.getElementById("closePopup");
+      if (closePopupButton) {
+          closePopupButton.addEventListener("click", closePopup); // 팝업 닫기 버튼 클릭 시 실행
+      }
+  });
+  
+  function updateSubtotalAndTotal() {
+      let totalAmount = 0;
+
+      document.querySelectorAll("tbody tr").forEach((row) => {
+          const price = parseFloat(row.querySelector(".price").dataset.price);
+          const quantityInput = row.querySelector(".quantity-input");
+          const subtotalElement = row.querySelector(".subtotal");
+          const quantity = parseInt(quantityInput.value) || 0;
+
+          const subtotal = price * quantity;
+          subtotalElement.textContent = `$${subtotal.toLocaleString()}`;
+          totalAmount += subtotal;
+      });
+
+      document.querySelector(".total-section").textContent = `Total: $${totalAmount.toLocaleString()}`;
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+      document.querySelectorAll(".quantity-input").forEach((input) => {
+          input.addEventListener("input", updateSubtotalAndTotal);
+      });
+
+      const orderButton = document.querySelector("#orderButton");
+      if (orderButton) {
+          orderButton.addEventListener("click", validateStock);
+      }
+
+      document.getElementById("closePopup").addEventListener("click", closePopup);
+
       updateSubtotalAndTotal();
-    });
-  </script>
+  });
+</script>
+
 </head>
 <body>
   <h2>Cart</h2>
@@ -146,24 +210,26 @@
         <tbody>
           <% let totalAmount = 0; %>
           <% cartItems.forEach(item => { %>
-            <% const subtotal = item.price * item.quantity; %>
-            <% totalAmount += subtotal; %>
+            <% const subtotal = (item.price * item.quantity).toFixed(2); %> <!-- subtotal 소수점 2자리 고정 -->
+            <% totalAmount += parseFloat(subtotal); %> <!-- 소수점 2자리 값으로 합산 -->
             <tr>
               <td>
                 <input type="checkbox" name="selectedProducts[]" value="<%= item.productId %>">
               </td>
               <td><%= item.name %></td>
-              <td class="price" data-price="<%= item.price %>">₩<%= item.price.toLocaleString() %></td>
+              <td class="price" data-price="<%= item.price %>">$<%= item.price.toFixed(2) %></td>
               <td>
                 <input 
                   type="number" 
                   class="quantity-input" 
                   name="quantities[<%= item.productId %>]" 
                   value="<%= item.quantity %>" 
-                  min="1"
+                  min="1" 
+                  max="<%= item.stock %>" 
+                  data-stock="<%= item.stock %>" 
                   style="width: 50px;">
               </td>
-              <td class="subtotal">₩<%= subtotal.toLocaleString() %></td>
+              <td class="subtotal">$<%= subtotal %></td> <!-- subtotal 소수점 2자리 출력 -->
               <td>
                 <button type="submit" formaction="/store/cart/remove/<%= item.productId %>">Remove</button>
               </td>
@@ -171,15 +237,20 @@
           <% }) %>
         </tbody>
       </table>
-    
       <div class="total-section">
-        Total: ₩<%= totalAmount.toLocaleString() %>
+        Total: $<%= totalAmount.toFixed(2) %> <!-- totalAmount 소수점 2자리 출력 -->
       </div>
-    
+
       <div style="text-align: center; margin-top: 20px;">
         <button type="submit" id="orderButton">Order</button>
       </div>
     </form>
   <% } %>
+
+  <!-- 팝업 -->
+  <div id="stockPopup" class="popup">
+    <p id="popupMessage">Out of stock. Contact your manager.</p>
+    <button id="closePopup">Close</button>
+</div>
 </body>
 </html>

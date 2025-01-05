@@ -37,7 +37,7 @@
           <th>Order ID</th>
           <th>Store Name</th>
           <th>Total Amount</th>
-          <th>Status</th>
+          <!-- <th>Status</th> -->
           <th>Date</th>
           <th>Actions</th>
         </tr>
@@ -47,8 +47,8 @@
           <tr>
             <td><%= order.formattedOrderNumber %></td>
             <td><%= order.userId.storeName %></td>
-            <td>₩<%= order.totalAmount.toLocaleString() %></td>
-            <td><%= order.status %></td>
+            <td>$<%= order.totalAmount.toFixed(2) %></td>
+            <!-- <td><%= order.status %></td> -->
             <td><%= new Date(order.createdAt).toLocaleString() %></td>
             <td><a class="details-link" href="/orders/detail/<%= order._id %>">View Details</a></td>
           </tr>

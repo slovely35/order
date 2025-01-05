@@ -80,41 +80,46 @@
     <a href="/admin/orders">Order Management</a>
     <a href="/admin/stores">Store Management</a>
     <a href="/admin/settings">Settings</a>
+    <a href="/auth/logout" style="color: red; font-weight: bold;">Logout</a> <!-- 로그아웃 버튼 -->
   </div>
 
-  <!-- 메인 콘텐츠 -->
-  <div class="main-content">
-    <h2>Order Management</h2>
+<!-- 메인 콘텐츠 -->
+<div class="main-content">
+  <h2>Order Management</h2>
 
-    <% if (orders.length === 0) { %>
-      <p>No orders found.</p>
-    <% } else { %>
-      <table>
-        <thead>
+  <% if (orders.length === 0) { %>
+    <p>No orders found.</p>
+  <% } else { %>
+    <table>
+      <thead>
+        <tr>
+          <th>Order ID</th>
+          <th>Store Name</th>
+          <th>Store Address</th>
+          <th>Total Amount</th>
+          <th>Order Date</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% orders.forEach(order => { %>
           <tr>
-            <th>Order ID</th>
-            <th>Store Name</th>
-            <th>Store Address</th>
-            <th>Total Amount</th>
-            <th>Status</th>
-            <th>Order Date</th>
+            <td><%= order.formattedOrderNumber || order._id %></td>
+            <td><%= order.userId ? order.userId.storeName : 'N/A' %></td>
+            <td>
+              <%= order.userId ? `${order.userId.address.town}, ${order.userId.address.state}, ${order.userId.address.zipcode}` : 'N/A' %>
+            </td>
+            <td>$<%= order.totalAmount.toFixed(2) %></td>
+            <td><%= new Date(order.createdAt).toLocaleDateString('en-US') %></td>
+            <td>
+              <a class="details-link" href="/admin/orders/<%= order._id %>">View Details</a>
+            </td>
           </tr>
-        </thead>
-        <tbody>
-          <% orders.forEach(order => { %>
-            <tr>
-              <td><%= order._id %></td>
-              <td><%= order.userId ? order.userId.storeName : 'N/A' %></td>
-              <td><%= order.userId ? order.userId.address : 'N/A' %></td>
-              <td>₩<%= order.totalAmount.toLocaleString() %></td>
-              <td class="order-status"><%= order.status %></td>
-              <td><%= new Date(order.createdAt).toLocaleDateString() %></td> <!-- 주문 날짜 표시 -->
-            </tr>
-          <% }) %>
-        </tbody>
-      </table>
-    <% } %>
-  </div>
+        <% }) %>
+      </tbody>
+    </table>
+  <% } %>
+</div>
 
 </body>
 </html>

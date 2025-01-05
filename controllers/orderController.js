@@ -17,22 +17,32 @@ async function sendOrderConfirmationEmail(orderDetails) {
     },
   });
 
-  const emailContent = `
+  const orderDate = new Date(); // 현재 날짜와 시간
+  const orderDateFormatted = orderDate.toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+  });
+
+    const emailContent = `
     <h2>New Order Received</h2>
     <p><strong>Store Name:</strong> ${storeOwner.storeName}</p>
     <p><strong>Orderer Email:</strong> ${storeOwner.email}</p>
-    <p><strong>Address:</strong> ${storeOwner.address}</p>
+    <p><strong>Address:</strong> ${storeOwner.address.town}, ${storeOwner.address.state}, ${storeOwner.address.zipcode}</p>
+    <p><strong>Order Date:</strong> ${orderDateFormatted}</p>
     <h3>Order Details:</h3>
     <ul>
       ${orderDetails.products
         .map(
           (item) =>
-            `<li>${item.name} - ${item.quantity} pcs: ₩${item.subtotal.toLocaleString()}</li>`
+            `<li>${item.name} - ${item.quantity} pcs: $${item.subtotal.toFixed(2)}</li>`
         )
         .join('')}
     </ul>
-    <p><strong>Total:</strong> ₩${orderDetails.totalAmount.toLocaleString()}</p>
+    <p><strong>Total:</strong> $${orderDetails.totalAmount.toFixed(2)}</p>
   `;
+
 
   await transporter.sendMail({
     from: `"Order System" <${process.env.EMAIL_USER}>`, // 고정된 발신자 이메일
@@ -57,7 +67,7 @@ async function createOrder(req, res) {
       cart.map(async (item) => {
         const product = await Product.findById(item.productId);
         if (!product || product.stock < item.quantity) {
-          throw new Error(`Insufficient stock for product: ${product ? product.name : 'Unknown'}`);
+          throw new Error(`Out of stock. Contact your manager`);
         }
 
         // 제품 재고 감소

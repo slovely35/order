@@ -29,6 +29,16 @@
       margin-left: 220px;
       padding: 20px;
     }
+
+    .sidebar a[href="/auth/logout"] {
+      color: red;
+      font-weight: bold;
+      margin-top: 20px;
+    }
+
+    .sidebar a[href="/auth/logout"]:hover {
+      background-color: #ffcccc;
+    }
   </style>
 </head>
 <body>
@@ -37,6 +47,8 @@
     <a href="/store/dashboard">All Products</a>
     <a href="/store/cart">Cart</a>
     <a href="/orders/history">Order History</a>
+    <a href="/auth/logout" style="color: red; font-weight: bold;">Logout</a> <!-- 로그아웃 버튼 -->
+  </div>
   </div>
 
   <div class="main-content">

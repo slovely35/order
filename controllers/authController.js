@@ -3,14 +3,27 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 
+
 // 회원가입
 async function register(req, res) {
   try {
-    const { storeName, address, email, password } = req.body;
+    const { storeName, address, email, confirmEmail, password, confirmPassword } = req.body;
 
     // 입력 값 유효성 검사
-    if (!storeName || !address || !email || !password) {
+    if (!storeName || !address || !address.town || !address.state || !address.zipcode || !email || !confirmEmail || !password || !confirmPassword) {
       req.flash('error', 'All fields are required.');
+      return res.redirect('/auth/register');
+    }
+
+    // 이메일 일치 여부 확인
+    if (email.toLowerCase() !== confirmEmail.toLowerCase()) {
+      req.flash('error', 'Emails do not match.');
+      return res.redirect('/auth/register');
+    }
+
+    // 비밀번호 일치 여부 확인
+    if (password !== confirmPassword) {
+      req.flash('error', 'Passwords do not match.');
       return res.redirect('/auth/register');
     }
 
@@ -28,7 +41,7 @@ async function register(req, res) {
     }
 
     // 이메일 중복 확인
-    const existingUser = await User.findOne({ email });
+    const existingUser = await User.findOne({ email: email.toLowerCase() });
     if (existingUser) {
       req.flash('error', 'Email already in use. Please use a different email.');
       return res.redirect('/auth/register');
@@ -40,8 +53,12 @@ async function register(req, res) {
     // 새 사용자 생성
     const user = new User({
       storeName,
-      address,
-      email,
+      address: {
+        town: address.town,
+        state: address.state,
+        zipcode: address.zipcode,
+      },
+      email: email.toLowerCase(),
       password: hashedPassword,
       role: 'storeOwner', // 기본 역할 설정
     });
@@ -57,15 +74,42 @@ async function register(req, res) {
   }
 }
 
+
+
 // 로그인
 const login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    const user = await User.findOne({ email });
+    console.log('Login attempt - Email:', email);
+    console.log('Admin Email:', adminEmail);
+    console.log('Admin Password:', adminPassword);
+
+    // 관리자 계정 인증
+    if (email.toLowerCase() === adminEmail.toLowerCase() && password === adminPassword) {
+      console.log('Admin credentials matched.');
+      const token = jwt.sign(
+        { role: 'admin' },
+        process.env.JWT_SECRET || 'your_jwt_secret',
+        { expiresIn: '2h' }
+      );
+
+      res.cookie('authToken', token, {
+        httpOnly: true,
+        secure: false,
+        maxAge: 2 * 60 * 60 * 1000,
+      });
+
+      console.log('Redirecting to /admin/dashboard');
+      return res.redirect('/admin/dashboard');
+    }
+
+    // 일반 사용자 인증
+    const user = await User.findOne({ email: email.toLowerCase() });
     if (!user || !(await bcrypt.compare(password, user.password))) {
       console.log('Invalid credentials:', email);
-      return res.status(400).send('Invalid email or password.');
+      req.flash('error', 'Invalid email or password.');
+      return res.redirect('/auth/login');
     }
 
     const token = jwt.sign(
@@ -80,10 +124,7 @@ const login = async (req, res) => {
       maxAge: 2 * 60 * 60 * 1000,
     });
 
-    if (user.role === 'admin') {
-      console.log('Admin logged in. Redirecting to /admin/dashboard');
-      return res.redirect('/admin/dashboard');
-    } else if (user.role === 'storeOwner') {
+    if (user.role === 'storeOwner') {
       console.log('Store owner logged in. Redirecting to /store/dashboard');
       return res.redirect('/store/dashboard');
     } else {
@@ -95,7 +136,5 @@ const login = async (req, res) => {
     res.status(500).send('An error occurred during login.');
   }
 };
-
-
 
 module.exports = { register, login };

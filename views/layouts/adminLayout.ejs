@@ -37,6 +37,16 @@
             color: white;
             text-align: center;
         }
+
+        .sidebar a[href="/auth/logout"] {
+            color: red;
+            font-weight: bold;
+            margin-top: 20px;
+        }
+
+        .sidebar a[href="/auth/logout"]:hover {
+            background-color: #ffcccc;
+        }
     </style>
 </head>
 <body>
@@ -47,6 +57,7 @@
         <a href="/admin/orders">Order Management</a>
         <a href="/admin/stores">Store Management</a>
         <a href="/admin/settings">Settings</a>
+        <a href="/auth/logout" style="color: red; font-weight: bold;">Logout</a> <!-- 로그아웃 버튼 -->
     </div>
 
     <!-- 메인 콘텐츠 -->
