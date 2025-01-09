@@ -28,7 +28,7 @@ async function generateOrderNumber() {
 }
 
 // 주문 생성
-router.post('/checkout', async (req, res) => {
+router.post('/checkout', isStoreAccount, async (req, res) => {
     try {
         const { selectedProducts, quantities } = req.body;
 
@@ -46,6 +46,10 @@ router.post('/checkout', async (req, res) => {
         const products = await Product.find({ _id: { $in: selectedProducts } });
         if (!products || products.length === 0) {
             return res.status(400).json({ success: false, message: 'Invalid products selected.' });
+        }
+
+        if (!req.user || !req.user._id) {
+            throw new Error('User authentication is required.');
         }
 
         let totalAmount = 0;
@@ -172,14 +176,17 @@ router.post('/checkout', async (req, res) => {
             console.error('Error sending email:', emailError);
         }
 
-        fs.unlinkSync(pdfFilePath);
+        if (fs.existsSync(pdfFilePath)) {
+            fs.unlinkSync(pdfFilePath);
+        }
 
         res.status(200).json({ success: true, message: 'Order processed successfully!' });
     } catch (error) {
         console.error('Error processing order:', error);
-        res.status(500).json({ success: false, message: 'Order successfully!' });
+        res.status(500).json({ success: false, message: 'An error occurred while processing the order.' });
     }
 });
+
 
 // 주문 내역 보기
 router.get('/history', isStoreAccount, async (req, res) => {
