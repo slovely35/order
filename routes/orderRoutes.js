@@ -28,9 +28,11 @@ async function generateOrderNumber() {
 }
 
 // 주문 생성
-router.post('/checkout', isStoreAccount, async (req, res) => {
+router.post('/checkout', async (req, res) => {
     try {
         const { selectedProducts, quantities } = req.body;
+
+        console.log('Request Data:', { selectedProducts, quantities });
 
         // 데이터 유효성 검사
         if (!selectedProducts || !Array.isArray(selectedProducts) || selectedProducts.length === 0) {
@@ -48,30 +50,29 @@ router.post('/checkout', isStoreAccount, async (req, res) => {
 
         let totalAmount = 0;
         const insufficientStockProducts = [];
-        const orderItems = await Promise.all(
-            products.map(async (product) => {
-                const quantity = parseInt(quantities[product._id], 10);
+        const orderItems = [];
 
-                if (!quantity || quantity <= 0 || quantity > product.stock) {
-                    insufficientStockProducts.push(product.name);
-                    return null;
-                }
+        for (const product of products) {
+            const quantity = parseInt(quantities[product._id], 10);
+            if (!quantity || quantity <= 0 || quantity > product.stock) {
+                insufficientStockProducts.push(product.name);
+                continue;
+            }
 
-                const subtotal = product.price * quantity;
-                totalAmount += subtotal;
+            const subtotal = product.price * quantity;
+            totalAmount += subtotal;
 
-                product.stock -= quantity;
-                await product.save();
+            product.stock -= quantity;
+            await product.save();
 
-                return {
-                    productId: product._id,
-                    name: product.name,
-                    price: product.price,
-                    quantity,
-                    subtotal,
-                };
-            })
-        );
+            orderItems.push({
+                productId: product._id,
+                name: product.name,
+                price: product.price,
+                quantity,
+                subtotal,
+            });
+        }
 
         if (insufficientStockProducts.length > 0) {
             return res.status(400).json({
@@ -79,9 +80,6 @@ router.post('/checkout', isStoreAccount, async (req, res) => {
                 message: `Insufficient stock for: ${insufficientStockProducts.join(', ')}`,
             });
         }
-
-        const validOrderItems = orderItems.filter((item) => item !== null);
-        const orderNumber = await generateOrderNumber();
 
         const user = await User.findById(req.user._id);
         if (!user || !user.address) {
@@ -93,10 +91,11 @@ router.post('/checkout', isStoreAccount, async (req, res) => {
             throw new Error('Admin email not found.');
         }
 
+        const orderNumber = await generateOrderNumber();
         const order = new Order({
             orderNumber,
             userId: req.user._id,
-            products: validOrderItems,
+            products: orderItems,
             totalAmount,
         });
         await order.save();
@@ -118,7 +117,7 @@ router.post('/checkout', isStoreAccount, async (req, res) => {
             <h3>Order Details:</h3>
             <table>
                 <tr><th>Product</th><th>Quantity</th><th>Subtotal</th></tr>
-                ${validOrderItems
+                ${orderItems
                     .map(
                         (item) => `
                     <tr>
@@ -157,7 +156,7 @@ router.post('/checkout', isStoreAccount, async (req, res) => {
 
             await transporter.sendMail({
                 from: `"Order System" <${process.env.EMAIL_USER}>`,
-                to: admin.email, // 현재 데이터베이스에서 조회한 관리자 이메일
+                to: admin.email, // 관리자 이메일
                 subject: `New Order from ${user.storeName}`,
                 html: emailContent,
                 attachments: [
@@ -181,7 +180,6 @@ router.post('/checkout', isStoreAccount, async (req, res) => {
         res.status(500).json({ success: false, message: 'An error occurred while processing the order.' });
     }
 });
-
 
 // 주문 내역 보기
 router.get('/history', isStoreAccount, async (req, res) => {
