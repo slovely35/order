@@ -32,17 +32,18 @@ router.post('/checkout', isStoreAccount, async (req, res) => {
     try {
         const { selectedProducts, quantities } = req.body;
 
-        // 선택된 제품이 없을 경우 처리
-        if (!selectedProducts || selectedProducts.length === 0) {
-            console.error('No products selected for checkout');
-            return res.status(400).json({ success: false, message: 'No products selected for checkout' });
+        // 데이터 유효성 검사
+        if (!selectedProducts || !Array.isArray(selectedProducts) || selectedProducts.length === 0) {
+            return res.status(400).json({ success: false, message: 'No products selected for checkout.' });
         }
 
-        // 선택된 제품 조회
+        if (!quantities || typeof quantities !== 'object') {
+            return res.status(400).json({ success: false, message: 'Invalid quantities provided.' });
+        }
+
         const products = await Product.find({ _id: { $in: selectedProducts } });
         if (!products || products.length === 0) {
-            console.error('No valid products found for the given IDs');
-            return res.status(400).json({ success: false, message: 'Invalid products selected' });
+            return res.status(400).json({ success: false, message: 'Invalid products selected.' });
         }
 
         let totalAmount = 0;
@@ -51,7 +52,6 @@ router.post('/checkout', isStoreAccount, async (req, res) => {
             products.map(async (product) => {
                 const quantity = parseInt(quantities[product._id], 10);
 
-                // 수량 검증 (재고 초과 또는 0 이하)
                 if (!quantity || quantity <= 0 || quantity > product.stock) {
                     insufficientStockProducts.push(product.name);
                     return null;
@@ -60,7 +60,6 @@ router.post('/checkout', isStoreAccount, async (req, res) => {
                 const subtotal = product.price * quantity;
                 totalAmount += subtotal;
 
-                // 재고 업데이트
                 product.stock -= quantity;
                 await product.save();
 
@@ -75,17 +74,25 @@ router.post('/checkout', isStoreAccount, async (req, res) => {
         );
 
         if (insufficientStockProducts.length > 0) {
-            console.error(`Insufficient stock for products: ${insufficientStockProducts.join(', ')}`);
             return res.status(400).json({
                 success: false,
-                message: `Out of stock. Contact your manager`,
+                message: `Insufficient stock for: ${insufficientStockProducts.join(', ')}`,
             });
         }
 
         const validOrderItems = orderItems.filter((item) => item !== null);
         const orderNumber = await generateOrderNumber();
 
-        // 주문 생성
+        const user = await User.findById(req.user._id);
+        if (!user || !user.address) {
+            throw new Error('User or address information is missing.');
+        }
+
+        const admin = await User.findOne({ role: 'admin' });
+        if (!admin || !admin.email) {
+            throw new Error('Admin email not found.');
+        }
+
         const order = new Order({
             orderNumber,
             userId: req.user._id,
@@ -94,15 +101,9 @@ router.post('/checkout', isStoreAccount, async (req, res) => {
         });
         await order.save();
 
-        // 장바구니 비우기
         await Cart.updateOne({ userId: req.user._id }, { $set: { items: [] } });
 
-        // 주문 날짜 추가
-        const orderDate = new Date();
-        const user = await User.findById(req.user._id);
-
-        // 이메일 내용 준비
-        const orderDateFormatted = new Date(orderDate).toLocaleDateString('en-US', {
+        const orderDateFormatted = new Date().toLocaleDateString('en-US', {
             weekday: 'long',
             year: 'numeric',
             month: 'long',
@@ -110,90 +111,76 @@ router.post('/checkout', isStoreAccount, async (req, res) => {
         });
 
         const emailContent = `
-            <h2 style="font-size: 18px;">New Order Received</h2>
-            <p><strong style="font-size: 20px; font-weight: bold;">Store Name: ${user.storeName}</strong></p>
-            <p><strong style="font-size: 16px;">Address:</strong> ${user.address.town}, ${user.address.state}, ${user.address.zipcode}</p>
-            <p><strong style="font-size: 16px;">Order Date:</strong> ${orderDateFormatted}</p>
-            <h3 style="font-size: 16px;">Order Details:</h3>
-            <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
-                <thead>
+            <h2>New Order Received</h2>
+            <p><strong>Store Name:</strong> ${user.storeName}</p>
+            <p><strong>Address:</strong> ${user.address.town || 'N/A'}, ${user.address.state || 'N/A'}, ${user.address.zipcode || 'N/A'}</p>
+            <p><strong>Order Date:</strong> ${orderDateFormatted}</p>
+            <h3>Order Details:</h3>
+            <table>
+                <tr><th>Product</th><th>Quantity</th><th>Subtotal</th></tr>
+                ${validOrderItems
+                    .map(
+                        (item) => `
                     <tr>
-                        <th style="padding: 10px; text-align: left; border: 1px solid #ddd;">Product</th>
-                        <th style="padding: 10px; text-align: left; border: 1px solid #ddd;">Quantity</th>
-                        <th style="padding: 10px; text-align: left; border: 1px solid #ddd;">Subtotal</th>
+                        <td>${item.name}</td>
+                        <td>${item.quantity}</td>
+                        <td>$${item.subtotal.toFixed(2)}</td>
                     </tr>
-                </thead>
-                <tbody>
-                    ${validOrderItems
-                        .map(
-                            (item) =>
-                                `<tr>
-                                    <td style="padding: 10px; border: 1px solid #ddd;">${item.name}</td>
-                                    <td style="padding: 10px; border: 1px solid #ddd;">${item.quantity}</td>
-                                    <td style="padding: 10px; border: 1px solid #ddd;">$${item.subtotal.toFixed(2)}</td>
-                                </tr>`
-                        )
-                        .join('')}
-                </tbody>
+                `
+                    )
+                    .join('')}
             </table>
-            <p><strong style="font-size: 16px;">Total Amount:</strong> $${totalAmount.toFixed(2)}</p>
+            <p><strong>Total Amount:</strong> $${totalAmount.toFixed(2)}</p>
         `;
 
-        // PDF 파일 생성
         const pdfFilePath = path.join(__dirname, 'order.pdf');
-        const browser = await puppeteer.launch();
-        const page = await browser.newPage();
-        await page.setContent(emailContent);
-        await page.pdf({ path: pdfFilePath, format: 'A4' });
-        await browser.close();
+        try {
+            const browser = await puppeteer.launch();
+            const page = await browser.newPage();
+            await page.setContent(emailContent);
+            await page.pdf({ path: pdfFilePath, format: 'A4' });
+            await browser.close();
+        } catch (pdfError) {
+            console.error('Error generating PDF:', pdfError);
+        }
 
-        // 이메일 전송
-        const transporter = nodemailer.createTransport({
-            host: process.env.EMAIL_HOST,
-            port: process.env.EMAIL_PORT,
-            secure: true,
-            auth: {
-                user: process.env.EMAIL_USER,
-                pass: process.env.EMAIL_PASS,
-            },
-        });
-
-        await transporter.sendMail({
-            from: `"Order System" <${process.env.EMAIL_USER}>`,
-            to: process.env.ADMIN_EMAIL,
-            subject: `New Order from ${user.storeName}`,
-            text: 'Please find the attached PDF for the order details.',
-            attachments: [
-                {
-                    filename: 'order.pdf',
-                    path: pdfFilePath,
+        try {
+            const transporter = nodemailer.createTransport({
+                host: process.env.EMAIL_HOST,
+                port: 587,
+                secure: true,
+                auth: {
+                    user: process.env.EMAIL_USER,
+                    pass: process.env.EMAIL_PASS,
                 },
-            ],
-        });
+            });
 
-        console.log('Order processed and email with PDF sent successfully');
+            await transporter.sendMail({
+                from: `"Order System" <${process.env.EMAIL_USER}>`,
+                to: admin.email, // 현재 데이터베이스에서 조회한 관리자 이메일
+                subject: `New Order from ${user.storeName}`,
+                html: emailContent,
+                attachments: [
+                    {
+                        filename: 'order.pdf',
+                        path: pdfFilePath,
+                    },
+                ],
+            });
 
-        // PDF 파일 삭제
+            console.log('Order email sent successfully.');
+        } catch (emailError) {
+            console.error('Error sending email:', emailError);
+        }
+
         fs.unlinkSync(pdfFilePath);
 
         res.status(200).json({ success: true, message: 'Order processed successfully!' });
     } catch (error) {
-        console.error('Error processing order:', error.message);
-
-        if (error.message.startsWith('Insufficient stock')) {
-            return res.status(400).json({
-                success: false,
-                message: error.message,
-            });
-        }
-
-        res.status(500).json({
-            success: false,
-            message: 'An error occurred while processing the order.',
-        });
+        console.error('Error processing order:', error);
+        res.status(500).json({ success: false, message: 'An error occurred while processing the order.' });
     }
 });
-
 
 
 // 주문 내역 보기
