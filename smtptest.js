@@ -3,13 +3,17 @@ require('dotenv').config();
 
 const transporter = nodemailer.createTransport({
     host: process.env.EMAIL_HOST,
-    port: Number(process.env.EMAIL_PORT),
+    port: 587,
     secure: false,
     auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS,
     },
     debug: true,
+    tls: {
+        rejectUnauthorized: false, // SMTP 인증서 검증 비활성화 (테스트용)
+    },
+    logger: true,
 });
 
 transporter.sendMail({
