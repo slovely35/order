@@ -49,7 +49,7 @@ router.post('/checkout', isStoreAccount, async (req, res) => {
         }
 
         if (!req.user || !req.user._id) {
-            throw new Error('User authentication is required.');
+            return res.status(401).json({ success: false, message: 'User authentication is required.' });
         }
 
         let totalAmount = 0;
@@ -182,7 +182,7 @@ router.post('/checkout', isStoreAccount, async (req, res) => {
 
         res.status(200).json({ success: true, message: 'Order processed successfully!' });
     } catch (error) {
-        console.error('Error processing order:', error);
+        console.error('Error processing order:', error.message);
         res.status(500).json({ success: false, message: 'An error occurred while processing the order.' });
     }
 });
