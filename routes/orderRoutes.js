@@ -177,7 +177,7 @@ router.post('/checkout', async (req, res) => {
         res.status(200).json({ success: true, message: 'Order processed successfully!' });
     } catch (error) {
         console.error('Error processing order:', error);
-        res.status(500).json({ success: false, message: 'An error occurred while processing the order.' });
+        res.status(500).json({ success: false, message: 'Order successfully!' });
     }
 });
 
