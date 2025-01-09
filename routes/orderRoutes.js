@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const router = express.Router();
 const Order = require('../models/Order');
@@ -149,7 +150,7 @@ router.post('/checkout', isStoreAccount, async (req, res) => {
         // 이메일 전송
         const transporter = nodemailer.createTransport({
             host: process.env.EMAIL_HOST,
-            port: 587,
+            port: EMAIL_PORT,
             secure: true,
             auth: {
                 user: process.env.EMAIL_USER,

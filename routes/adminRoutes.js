@@ -142,18 +142,44 @@ router.get('/settings', isAdmin, async (req, res) => {
 router.post('/settings/update-email', isAdmin, async (req, res) => {
   try {
     const { newEmail } = req.body;
-    const admin = await User.findById(req.user._id); // 현재 로그인한 관리자 정보 가져오기
 
-    admin.email = newEmail; // 이메일 업데이트
-    await admin.save();
+    // 현재 관리자 찾기
+    const admin = await User.findOne({ role: 'admin' });
+    if (!admin) {
+      return res.status(404).json({ success: false, message: 'Admin not found.' });
+    }
 
-    req.flash('successMessage', 'Email updated successfully!');
-    res.redirect('/admin/settings');
+    // 이메일 중복 체크
+    const existingUser = await User.findOne({ email: newEmail });
+    if (existingUser && existingUser._id.toString() !== admin._id.toString()) {
+      return res.status(400).json({
+        success: false,
+        message: `The email "${newEmail}" is already in use.`,
+      });
+    }
+
+    // 이메일만 업데이트
+    await User.updateOne(
+      { _id: admin._id },
+      { $set: { email: newEmail } }
+    );
+
+    res.json({
+      success: true,
+      message: 'Admin email updated successfully!',
+      email: newEmail,
+    });
   } catch (error) {
     console.error('Error updating admin email:', error);
-    res.status(500).send('Error updating admin email');
+
+    res.status(500).json({
+      success: false,
+      message: 'An error occurred while updating the admin email.',
+    });
   }
 });
+
+
 
 // 주문 세부 정보 조회 라우트
 router.get('/orders/:id', async (req, res) => {
